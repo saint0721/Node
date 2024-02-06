@@ -24,10 +24,6 @@
   </div> 
   <% } %>
 
-  <a href="/list/next/<%= list[list.length-1]._id %>">다음</a>
-  
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
   <script>     
   for (let i=0; i< '<%= list.length %>'; i++)  {
     document.querySelectorAll('.delete')[i].addEventListener('click', (e) => {

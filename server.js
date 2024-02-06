@@ -1,12 +1,15 @@
 require('dotenv').config()
 const password = process.env.DB_PW
+
+console.log(password)
+
 const express = require('express')
 const app = express()
 const { MongoClient, ObjectId } = require('mongodb')
 const methodOverride = require('method-override')
-const session = require('express-session')
-const passport = require('passport')
-const LocalStrategy = require('passport-local')
+
+require('dotenv').config()
+const password = process.env.DB_PW
 
 app.use(methodOverride('_method'))
 app.use(express.static(__dirname + '/public'));
