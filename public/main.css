@@ -1,0 +1,19 @@
+body {
+  margin-left: auto;
+  margin-right: 100px;
+}
+.nav {
+  display: flex;
+  padding: 15px;
+  align-items: center;
+  background : white;
+}
+.nav a {
+  margin-right: 10px;
+}
+.logo {
+  font-weight: bold;
+}
+.img {
+  text-align: center;
+}
