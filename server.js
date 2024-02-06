@@ -1,10 +1,12 @@
+require('dotenv').config()
+const password = process.env.DB_PW
+
+console.log(password)
+
 const express = require('express')
 const app = express()
 const { MongoClient, ObjectId } = require('mongodb')
 const methodOverride = require('method-override')
-
-require('dotenv').config()
-const password = process.env.MongoDBPassword
 
 app.use(methodOverride('_method'))
 app.use(express.static(__dirname + '/public'));
@@ -14,7 +16,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended : true } ))
 
 let db
-const url = 'mongodb+srv://sikim0721:{password}@cluster0.tqbj5n0.mongodb.net/?retryWrites=true&w=majority'
+const url = `mongodb+srv://sikim0721:${password}@cluster0.tqbj5n0.mongodb.net/?retryWrites=true&w=majority`
 new MongoClient(url).connect().then((client)=>{
   console.log('DB연결성공')
   db = client.db('forum')
