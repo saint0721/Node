@@ -100,3 +100,9 @@ app.put('/edit', async (req, res) => {
     console.error(err)
   }
 })
+
+// 라우터 delete 요청
+app.delete('/delete', async (req, res) => {
+  await db.collection('post').deleteOne({ _id : new ObjectId(req.query.docid) })
+  res.send('DB 삭제 완료')
+})
