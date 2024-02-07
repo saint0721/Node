@@ -1,8 +1,6 @@
 require('dotenv').config()
 const password = process.env.DB_PW
 
-console.log(password)
-
 const express = require('express')
 const app = express()
 const { MongoClient, ObjectId } = require('mongodb')
