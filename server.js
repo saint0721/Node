@@ -44,6 +44,16 @@ app.get('/list', async (req, res) => {
   res.render('list.ejs', { list : result })
 })
 
+app.get('/list/:id', async (req, res) => {
+  let result = await db.collection('post').find().limit(5).toArray()
+  res.render('list.ejs', { list : result })
+})
+
+app.get('/list/next/:id', async (req, res) => {
+  let result = await db.collection('post').find({_id : {$gt : new ObjectId(req.params.id)}}).limit(5).toArray()
+  res.render('list.ejs', { list : result })
+})
+
 app.get('/time', async (req, res) => {
   let date = await new Date()
   res.render('time.ejs', { time : date })
