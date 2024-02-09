@@ -1,12 +1,18 @@
 require('dotenv').config()
 const password = process.env.DB_PW
+<<<<<<< HEAD
 
 console.log(password)
 
+=======
+>>>>>>> 190c6a7 (<server.js> passport 오류 해결)
 const express = require('express')
 const app = express()
 const { MongoClient, ObjectId } = require('mongodb')
 const methodOverride = require('method-override')
+const session = require('express-session')
+const passport = require('passport')
+const LocalStrategy = require('passport-local')
 
 require('dotenv').config()
 const password = process.env.DB_PW
