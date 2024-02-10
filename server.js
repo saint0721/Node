@@ -13,6 +13,8 @@ const methodOverride = require('method-override')
 const session = require('express-session')
 const passport = require('passport')
 const LocalStrategy = require('passport-local')
+const bcrypt = require('bcrypt')
+const MongoStore = require('connect-mongo')
 
 require('dotenv').config()
 const password = process.env.DB_PW
@@ -29,11 +31,29 @@ app.use(session({
   secret: password,
   resave : false,
   saveUninitialized : false,
-  cookie : { maxAge : 60 * 60 * 1000 }
+  cookie : { maxAge : 60 * 60 * 1000 },
+  store : MongoStore.create({
+    mongoUrl : `mongodb+srv://sikim0721:${password}@cluster0.tqbj5n0.mongodb.net/?retryWrites=true&w=majority`,
+    dbName : "forum"
+  })
 }))
 app.use(passport.session())
 
+passport.use(new LocalStrategy(async (user_id, user_pw, cb) => {
+  let user = await db.collection('user').findOne({ username: user_id });
+  if (!user) {
+    return cb(null, false, { message: '아이디 DB에 없음' });
+  }
+  if (await bcrypt.compare(user_pw, user.password)) {
+    return cb(null, user);
+  } else {
+    console.log(user_id); // 사용자가 제공한 아이디 출력
+    return cb(null, false, { message: '비번불일치' });
+  }
+}))
+
 passport.serializeUser((user, done) => {
+  console.log(user)
   process.nextTick(() => {
     done(null, { id : user._id, username : user.username })
   })
@@ -44,7 +64,9 @@ passport.deserializeUser(async (user, done) => {
   let result = await db.collection('user').findOne({ _id : new ObjectId(user.id) })
   if(result) {
     delete result.password
-    done(null, result)
+    process.nextTick(() => {
+      done(null, result)
+    })
   } else {
     done(new Error('User not found'))
   }
@@ -125,22 +147,26 @@ app.get('/edit/:id', async (req, res) => {
   }
 })
 
-passport.use(new LocalStrategy(async (user_id, user_pw, cb) => {
-  let user = await db.collection('user').findOne({ username: user_id });
-  if (!user) {
-    return cb(null, false, { message: '아이디 DB에 없음' });
-  }
-  let result = user.password; // 사용자의 비밀번호 가져오기
-  if (result == user_pw) {
-    return cb(null, user);
-  } else {
-    console.log(user_id); // 사용자가 제공한 아이디 출력
-    return cb(null, false, { message: '비번불일치' });
-  }
-}))
-
 app.get('/login', async (req, res) => {
+  console.log(req.user)
   await res.render('login.ejs')
+})
+
+app.get('/mypage', loggedin, async (req, res) => {
+  res.render('myPage.ejs', { result : req.user })
+})
+
+// 로그인 여부 함수
+function loggedin(req, res, next) {
+  if (req.user) {
+    next()
+  } else {
+    res.send("로그인을 해주세요")
+  }
+}
+
+app.get('/register', (요청, 응답)=>{
+  응답.render('register.ejs')
 })
 
 // 라우터 post 요청
@@ -172,6 +198,12 @@ app.post('/login', async (req, res, next) => {
   } catch(err) {
     console.error(err)
   }
+})
+
+app.post('/register', async(req, res) => {
+  let hashing = await bcrypt.hash(req.body.password, 10)
+  await db.collection('user').insertOne({ username : req.body.username, password : hashing })
+  res.redirect('/')
 })
 
 // 라우터 put 요청
