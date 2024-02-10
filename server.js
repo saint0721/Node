@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended : true } ))
 
 app.use(passport.initialize())
 app.use(session({
-  secret: password,
+  secret: `${password}`,
   resave : false,
   saveUninitialized : false,
   cookie : { maxAge : 60 * 60 * 1000 },
@@ -189,10 +189,18 @@ app.post('/login', async (req, res, next) => {
   }
 })
 
-app.post('/register', async(req, res) => {
-  let hashing = await bcrypt.hash(req.body.password, 10)
-  await db.collection('user').insertOne({ username : req.body.username, password : hashing })
-  res.redirect('/')
+app.post('/register', async(req, res, info) => {
+  try {
+    let existId = await db.collection('user').findOne({username : req.body.username})
+    if(existId) {
+      return res.status(400).send('존재하는 아이디')
+    }
+    let hashing = await db.collection('user').insertOne({username : req.body.username, password : req.body.password})
+    res.redirect('/')
+  } catch(err) {
+    console.error(err)
+    next(err)
+  }
 })
 
 // 라우터 put 요청
