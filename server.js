@@ -26,23 +26,29 @@ app.use(express.urlencoded({ extended : true } ))
 
 app.use(passport.initialize())
 app.use(session({
-  secret: `비밀번호`,
+  secret: password,
   resave : false,
-  saveUninitialized : false
+  saveUninitialized : false,
+  cookie : { maxAge : 60 * 60 * 1000 }
 }))
 app.use(passport.session())
 
-passport.use(new LocalStrategy(async (입력한아이디, 입력한비번, cb) => {
-  let result = await db.collection('user').findOne({ username : 입력한아이디})
-  if (!result) {
-    return cb(null, false, { message: '아이디 DB에 없음' })
-  }
-  if (result.password == 입력한비번) {
-    return cb(null, result)
+passport.serializeUser((user, done) => {
+  process.nextTick(() => {
+    done(null, { id : user._id, username : user.username })
+  })
+})
+
+// 쿠키 분석하는 역할
+passport.deserializeUser(async (user, done) => {
+  let result = await db.collection('user').findOne({ _id : new ObjectId(user.id) })
+  if(result) {
+    delete result.password
+    done(null, result)
   } else {
-    return cb(null, false, { message: '비번불일치' });
+    done(new Error('User not found'))
   }
-}))
+})
 
 let db
 const url = `mongodb+srv://sikim0721:${password}@cluster0.tqbj5n0.mongodb.net/?retryWrites=true&w=majority`
@@ -119,9 +125,22 @@ app.get('/edit/:id', async (req, res) => {
   }
 })
 
+passport.use(new LocalStrategy(async (user_id, user_pw, cb) => {
+  let user = await db.collection('user').findOne({ username: user_id });
+  if (!user) {
+    return cb(null, false, { message: '아이디 DB에 없음' });
+  }
+  let result = user.password; // 사용자의 비밀번호 가져오기
+  if (result == user_pw) {
+    return cb(null, user);
+  } else {
+    console.log(user_id); // 사용자가 제공한 아이디 출력
+    return cb(null, false, { message: '비번불일치' });
+  }
+}))
+
 app.get('/login', async (req, res) => {
-  await db.collection('user')
-  res.render('login.ejs')
+  await res.render('login.ejs')
 })
 
 // 라우터 post 요청
@@ -141,14 +160,18 @@ app.post('/add', async (req, res) => {
 })
 
 app.post('/login', async (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => { 
-    if (err) return res.status(500).json(err)
-    if (!user) return res.status(401).json(info.message)
-    req.login(user, (err)=> {
-      if(err) return next(err)
-      res.redirect('/')
-    })
-  })(req, res, next)
+  try {
+    passport.authenticate('local', (err, user, info) => { 
+      if (err) return res.status(500).json(err)
+      if (!user) return res.status(401).json(info.message)
+      req.logIn(user, (err)=> {
+        if(err) return next(err)
+        res.redirect('/')
+      })
+    })(req, res, next)
+  } catch(err) {
+    console.error(err)
+  }
 })
 
 // 라우터 put 요청
