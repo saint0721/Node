@@ -1,11 +1,5 @@
 require('dotenv').config()
 const password = process.env.DB_PW
-<<<<<<< HEAD
-
-console.log(password)
-
-=======
->>>>>>> 190c6a7 (<server.js> passport 오류 해결)
 const express = require('express')
 const app = express()
 const { MongoClient, ObjectId } = require('mongodb')
@@ -15,9 +9,6 @@ const passport = require('passport')
 const LocalStrategy = require('passport-local')
 const bcrypt = require('bcrypt')
 const MongoStore = require('connect-mongo')
-
-require('dotenv').config()
-const password = process.env.DB_PW
 
 app.use(methodOverride('_method'))
 app.use(express.static(__dirname + '/public'));
@@ -121,8 +112,6 @@ app.get('/time', async (req, res) => {
 app.get('/write', async (req, res) => {
   try{
     await res.render('write.ejs')
-    // 리다이렉트 구현
-    res.redirect('/list')
   } catch(err) {
     console.error(err)
   }
