@@ -195,7 +195,13 @@ app.post('/register', async(req, res, info) => {
     if(existId) {
       return res.status(400).send('존재하는 아이디')
     }
-    let hashing = await db.collection('user').insertOne({username : req.body.username, password : req.body.password})
+
+    if (req.body.password !== req.body.password2) {
+      return res.status(400).send('비밀번호가 일치하지 않습니다.')
+    } else {
+      let hashing = await bcrypt.hash(req.body.password, 10)
+      await db.collection('user').insertOne({username : req.body.username, password : hashing})
+    }
     res.redirect('/')
   } catch(err) {
     console.error(err)
