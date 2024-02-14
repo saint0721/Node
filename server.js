@@ -193,6 +193,14 @@ app.get('/register', blankSpace, (요청, 응답)=>{
   응답.render('register.ejs')
 })
 
+// 검색기능 구현
+app.get('/search', async(req, res) => {
+  console.log(req.query)
+  let result = await db.collection('post').find({ title : { $regex : req.query.value} }).toArray()
+  res.render('search.ejs', { list : result})
+})
+// 정규식을 쓰면 document가 많은경우 .find()를 사용하면 느리다. 일일이 검사하기 때문. index 사용하면 해결 가능
+
 // 라우터 post 요청
 app.post('/add', upload.single('img1'), async (req, res, next) => {
   try{
@@ -242,6 +250,16 @@ app.post('/register', async(req, res, next) => {
   } catch(err) {
     console.error(err)
     next(err)
+  }
+})
+
+// 검색기능 구현
+app.post('/search', async (req, res) => {
+  try {
+    await db.collection('post').insertOne({ search : req.body.search })
+    res.send('검색 실행중')
+  } catch(err) {
+    console.error(err)
   }
 })
 
