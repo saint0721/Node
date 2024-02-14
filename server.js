@@ -153,11 +153,12 @@ app.get('/write', async (req, res) => {
   }
 })
 
-// url 파라미터 적용
+// 상세페이지
 app.get('/detail/:id', async (req, res) => {
   try {
+    let result2 = await db.collection('comment').find({ parentId : new ObjectId(req.params.id) }).toArray()
     let result = await db.collection('post').findOne({ _id : new ObjectId(req.params.id) })
-    res.render('detail.ejs', { result : result })
+    res.render('detail.ejs', { result : result, result2 : result2 })
   } catch(err) {
     console.error(err)
   }
@@ -276,13 +277,23 @@ app.post('/search', async (req, res) => {
     console.error(err)
   }
 })
+// 댓글 작성 기능 구현
+app.post('/comment', async (req, res) => {
+  let result = await db.collection('comment').insertOne({
+    content : req.body.content,
+    writerId : new ObjectId(req.user._id),
+    writer : req.user.username,
+    parentId : new ObjectId(req.body.parentId)
+  })
+  res.redirect('back')
+})
 
 // 라우터 put 요청
 app.put('/edit', async (req, res) => {
   try {
     await db.collection('post').updateOne(
       { _id : new ObjectId(req.body.id )}, 
-      { $set : { title : req.body.title, content : req.body.content } })
+      { $set : { title : req.body.title, content : req.body.content, comment : req.body.comment ? req.body.comment : '' } })
     res.redirect('/list')
   } catch(err) {
     console.error(err)
@@ -297,6 +308,3 @@ app.delete('/delete', async (req, res) => {
   })
   res.send('DB 삭제 완료')
 })
-/**
- * 
- */
