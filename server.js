@@ -194,20 +194,34 @@ app.get('/register', blankSpace, (요청, 응답)=>{
 })
 
 // 검색기능 구현
+// 정규식을 쓰면 document가 많은경우 .find()를 사용하면 느리다. 일일이 검사하기 때문. index 사용하면 해결 가능
 app.get('/search', async(req, res) => {
   console.log(req.query)
-  let result = await db.collection('post').find({ title : { $regex : req.query.value} }).toArray()
+  let condition = [
+    {$search : {
+      index : 'title_index',
+      text : { query : req.query.value, path : 'title' }
+    }},
+    // project : 0은 hidden, 1은 display
+    { $project : { title : 0 } }
+  ] 
+  let result = await db.collection('post').aggregate(condition).toArray()
   res.render('search.ejs', { list : result})
 })
-// 정규식을 쓰면 document가 많은경우 .find()를 사용하면 느리다. 일일이 검사하기 때문. index 사용하면 해결 가능
 
 // 라우터 post 요청
 app.post('/add', upload.single('img1'), async (req, res, next) => {
   try{
-    if(req.body.title == '' || req.body.content =='') {
+    if(req.body.title == '') {
       console.error(err)
     } else {
-      await db.collection('post').insertOne({ title : req.body.title, content : req.body.content, img : req.file.location })
+      await db.collection('post').insertOne({ 
+        title : req.body.title,
+        content : req.body.content,
+        img : req.file ? req.file.location : '',
+        user : req.user._id,
+        username : req.user.username })
+      // img : req.body.img가 들어가면 db 저장 가능, 현재는 해제함
       console.log('DB 저장완료')
       res.send('DB 저장완료')
     }
@@ -266,18 +280,23 @@ app.post('/search', async (req, res) => {
 // 라우터 put 요청
 app.put('/edit', async (req, res) => {
   try {
-    await db.collection('post').updateMany({ like : { $gt : 10} }, { $inc : {like : 2 } })
-    // await db.collection('post').updateOne(
-    //   { _id : new ObjectId(req.body.id )}, 
-    //   { $set : { title : req.body.title, content : req.body.content } })
+    await db.collection('post').updateOne(
+      { _id : new ObjectId(req.body.id )}, 
+      { $set : { title : req.body.title, content : req.body.content } })
     res.redirect('/list')
   } catch(err) {
     console.error(err)
   }
 })
 
-// 라우터 delete 요청
+// 라우터 delete 요청 현재는 쓰이질 않는다.
 app.delete('/delete', async (req, res) => {
-  await db.collection('post').deleteOne({ _id : new ObjectId(req.query.docid) })
+  await db.collection('post').deleteOne({ 
+    _id : new ObjectId(req.query.docid),
+    // user : new ObjectId(req.user._id)
+  })
   res.send('DB 삭제 완료')
 })
+/**
+ * 
+ */

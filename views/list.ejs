@@ -37,8 +37,28 @@
   </div> 
   <% } %>
 
+  <script>
+    $('.delete').on('click', function() {
+      var postId = $(this).data('id');
+      if(confirm('게시물을 삭제하시겠습니까?')) {
+        axios.delete('/delete?docid=' + postId)
+          .then(function(response) {
+            alert(response.data);
+            // 삭제가 성공하면 페이지를 새로고침합니다.
+            location.reload();
+          })
+          .catch(function(error) {
+            console.error(error);
+            alert('게시물 삭제 중 오류가 발생했습니다.');
+          });
+      }
+    });
+  </script>
+
+ <!-- 다음페이지 -->
   <a href="/list/next/<%= list[list.length-1]._id %>">다음</a>
   
+  <!-- axios 라이브러리 -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
